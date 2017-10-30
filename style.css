@@ -4,21 +4,27 @@ body {
   justify-content: center;
 }
 
+svg {}
+
 section {
   width: 960px;
   display: flex;
   flex-direction: column;
 }
 
-.bar {
-  display: flex;
-  flex: 1;
-  fill: lightgreen;
-  border-left: .5px solid rgba(0, 0, 0, 0.2);
-  border-right: .5px solid rgba(0, 0, 0, 0.2);
-}
-
 .description {
   white-space: pre-wrap;
   font-size: 13px;
+}
+
+.bar {
+  fill: lightgreen;
+}
+
+.bar:hover {
+  fill: orange;
+}
+
+.axis--x path {
+  display: none;
 }
