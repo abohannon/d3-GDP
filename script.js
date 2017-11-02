@@ -6,66 +6,96 @@ const dataUrl = 'https://raw.githubusercontent.com/FreeCodeCamp/ProjectReference
 const app = (body) => {
   const { data, description, name } = body
   const chartName = `United States ${name.split(',')[0]}, Quarterly`
-  const numbers = []
-  data.forEach((d) => {
-    return numbers.push(d[1])
-  })
-  const maxValue = d3.max(numbers)
-  const minDate = new Date(data[0][0])
-  const maxDate = new Date(data[data.length - 1][0])
 
-  d3.select('.title')
-    .append('h2')
+  // string to date helper
+  const dateFromData = date => {
+    const arr = date.split('-')
+    return new Date(arr[0], arr[1], arr[2])
+  }
+
+  // dimensions for svg canvas
+  const w = 900
+  const h = 600
+  const padding = 100
+
+  // create svg canvas
+  const svg = d3.select('svg')
+    .attr('width', w)
+    .attr('height', h)
+
+  // x scale and axis
+  const xScale = d3.scaleTime()
+    .domain([
+      d3.min(data, (d) => dateFromData(d[0])),
+      d3.max(data, (d) => dateFromData(d[0]))
+    ])
+    .range([padding, w - padding])
+
+  const xAxis = d3.axisBottom(xScale)
+
+  svg.append('g')
+    .attr('transform', `translate(0, ${h - padding})`)
+    .call(xAxis)
+
+  svg.append('text')
+    .attr('text-anchor', 'middle')
+    .attr('x', w / 2)
+    .attr('y', h - padding / 2 - 5)
+    .text('Year')
+
+  // y scale and axis
+  const yScale = d3.scaleLinear()
+    .domain([0, d3.max(data, (d) => d[1])])
+    .range([h - padding, padding])
+
+  const yAxis = d3.axisLeft(yScale)
+    .tickFormat(d => '$' + d3.format(',')(d))
+
+  svg.append('g')
+    .attr('transform', `translate(${padding}, 0)`)
+    .call(yAxis)
+
+  svg.append('text')
+    .attr('text-anchor', 'middle')
+    .attr('transform', `translate(${padding / 3}, ${h / 2})rotate(-90)`)
+    .text('Billions')
+
+  // plot data and add tooltip using native d3 title
+  svg.selectAll('rect')
+    .data(data)
+    .enter()
+    .append('rect')
+    .attr('x', d => xScale(dateFromData(d[0])))
+    .attr('y', d => yScale(d[1]))
+    .attr('width', 3)
+    .attr('height', d => h - padding - yScale(d[1]))
+    .attr('class', 'bar')
+    .append('title')
+    .text((d) => d[0] + ', ' + '$' + d3.format(',')(d[1]))
+
+  // chart title
+  svg.append('text')
+    .attr('text-anchor', 'middle')
+    .attr('x', w / 2)
+    .attr('y', padding / 2.5)
+    .attr('class', 'title')
     .text(chartName)
 
-  d3.select('.description')
-    .append('p')
-    .text(description)
+  // chart description
+  const desc = description.split('\n')
 
-  const svg = d3.select('svg')
-  const margin = {top: 20, right: 20, bottom: 30, left: 40}
-  const width = +svg.attr('width') - margin.left - margin.right
-  const height = +svg.attr('height') - margin.top - margin.bottom
-
-  const x = d3.scaleBand().rangeRound([0, width]).padding(0.3)
-  const y = d3.scaleLinear().rangeRound([height, 0])
-
-  const g = svg.append('g')
-    .attr('transform', 'translate(' + margin.left + ',' + margin.top + ')')
-
-  x.domain(data.map((d) => {
-    return d[0]
-  }))
-
-  y.domain([0, d3.max(data, (d) => {
-    return d[1]
-  })])
-
-  console.log(minDate, maxDate)
-
-  g.append('g')
-    .attr('class', 'axis axis--x')
-    .attr('transform', 'translate(0,' + height + ')')
-    .call(d3.axisBottom(x).ticks(d3.timeYears(5)))
-
-  g.append('g')
-    .attr('class', 'axis axis--y')
-    .call(d3.axisLeft(y).ticks(10))
-    .append('text')
-    .attr('transform', 'rotate(-90)')
-    .attr('y', 6)
-    .attr('dy', '0.71em')
-    .attr('text-anchor', 'end')
-    .text('Frequency')
-
-  g.selectAll('.bar')
-    .data(data)
-    .enter().append('rect')
-    .attr('class', 'bar')
-    .attr('x', (d) => x(d[0]))
-    .attr('y', (d) => y(d[1]))
-    .attr('width', x.bandwidth())
-    .attr('height', (d) => height - y(d[1]))
+  svg.append('text')
+    .attr('x', w / 2)
+    .attr('y', h - padding / 10)
+    .attr('class', 'description')
+    .selectAll('tspan')
+    .data(desc)
+    .enter()
+    .append('tspan')
+    .attr('text-anchor', 'middle')
+    .attr('x', w / 2)
+    .attr('y', (d, i) => h - padding / 2 + i * 12 + 15)
+    .text(d => d)
 }
 
 // Fetch the data
